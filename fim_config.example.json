@@ -1,0 +1,75 @@
+{
+  "monitoring": {
+    "scan_interval": 60,
+    "worker_threads": 4,
+    "max_file_size_mb": 500,
+    "enable_incremental_scan": true
+  },
+  "watch_directories": [],
+  "exclude_patterns": [
+    "*.tmp",
+    "*.temp",
+    "*.log",
+    "*.swp",
+    "*~",
+    ".git/*",
+    ".svn/*",
+    "__pycache__/*",
+    "node_modules/*",
+    ".DS_Store"
+  ],
+  "priority_patterns": {
+    "critical": [
+      "*.exe",
+      "*.dll",
+      "*.sys",
+      "*.bat",
+      "*.ps1"
+    ],
+    "high": [
+      "*.conf",
+      "*.config",
+      "*.ini",
+      "*.xml"
+    ],
+    "medium": [
+      "*.py",
+      "*.js",
+      "*.java",
+      "*.cpp"
+    ]
+  },
+  "alerting": {
+    "enable_email": false,
+    "enable_webhook": false,
+    "critical_file_patterns": [
+      "*.exe",
+      "/etc/passwd",
+      "/etc/shadow"
+    ],
+    "alert_threshold": 10
+  },
+  "performance": {
+    "enable_caching": true,
+    "cache_ttl_seconds": 300,
+    "batch_size": 100
+  },
+  "logging": {
+    "log_directory": "logs",
+    "retention_days": 30,
+    "max_log_size_mb": 100
+  },
+  "security": {
+    "enable_entropy_analysis": true,
+    "enable_yara_scanning": false,
+    "enable_signature_verification": true,
+    "enable_ransomware_detection": true,
+    "enable_honeypot": true,
+    "enable_process_attribution": false,
+    "entropy_sample_bytes": 1048576,
+    "ransomware_score_threshold": 50,
+    "ransomware_bulk_threshold": 10,
+    "yara_rules_directory": "yara_rules",
+    "honeypot_files": []
+  }
+}

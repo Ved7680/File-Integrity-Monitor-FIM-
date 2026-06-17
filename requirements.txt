@@ -1,0 +1,8 @@
+# Required
+customtkinter>=5.2.0
+Pillow>=10.0.0
+
+# Optional — features degrade gracefully if missing
+psutil>=5.9.0            # CPU/memory stats + process attribution
+yara-python>=4.3.0       # YARA rule scanning
+pywin32>=306; sys_platform == "win32"   # Windows file ownership lookup

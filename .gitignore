@@ -1,0 +1,24 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+venv/
+.venv/
+
+# FIM runtime state — user-specific, contains paths & hashes
+fim_config.json
+fim_database.db
+fim_database.db-journal
+fim_database.db-wal
+fim_database.db-shm
+logs/
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.swp
+*~
