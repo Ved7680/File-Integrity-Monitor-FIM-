@@ -39,7 +39,7 @@ A production-grade File Integrity Monitor designed to monitor entire systems wit
 
 ## 🆚 How FIM Compares to Other Tools
 
-FIM is positioned as a **single-machine, local-first integrity + threat-detection toolkit** with a native dark desktop GUI. Most FIM products are either CLI-only daemons (AIDE, Tripwire OSS, Samhain) or full HIDS platforms that bundle FIM into a server-agent architecture (OSSEC/Wazuh, Auditbeat, CrowdStrike Falcon). This project sits in between — more than a hash differ, less than an enterprise platform.
+FIM is positioned as a **single-machine, local-first integrity + threat-detection toolkit** with a native dark desktop GUI. Most FIM products are either CLI-only daemons (AIDE, Tripwire OSS, Samhain) or full HIDS platforms that bundle FIM into a server-agent architecture (OSSEC/Wazuh, Auditbeat, CrowdStrike Falcon). This project sits in between - more than a hash differ, less than an enterprise platform.
 
 ### Feature matrix
 
@@ -79,7 +79,7 @@ FIM is positioned as a **single-machine, local-first integrity + threat-detectio
 
 ### Scope & tradeoffs
 
-FIM is deliberately scoped as a single-host, GUI-first, locally administered tool. The following are intentional tradeoffs — each comes with practical guidance for users whose needs go further.
+FIM is deliberately scoped as a single-host, GUI-first, locally administered tool. The following are intentional tradeoffs - each comes with practical guidance for users whose needs go further.
 
 - **Polled scanning, not kernel-level real-time.** FIM rescans on a configurable interval (default 60 s) instead of hooking into inotify (Linux) or the USN journal (Windows). This keeps the codebase portable, kernel-module-free, and runnable without elevated privileges. For sub-second detection, layer on **Wazuh** or **Auditbeat**, both of which forward kernel events.
 - **Single-host architecture, not a centralized console.** Each install is independent. This is the right shape for personal workstations, home labs, and small fleets administered by the operator at the keyboard. Teams managing tens to hundreds of hosts should look at **Wazuh** (free) or **Tripwire Enterprise / Qualys FIM** (commercial) for rollups, RBAC, and policy distribution.
