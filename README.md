@@ -37,6 +37,68 @@ A production-grade File Integrity Monitor designed to monitor entire systems wit
 - **Critical file monitoring** - Special handling for executables, configs
 - **Tamper detection** - Detects unauthorized modifications
 
+## 🆚 How FIM Compares to Other Tools
+
+FIM is positioned as a **single-machine, local-first integrity + threat-detection toolkit** with a native dark desktop GUI. Most FIM products are either CLI-only daemons (AIDE, Tripwire OSS, Samhain) or full HIDS platforms that bundle FIM into a server-agent architecture (OSSEC/Wazuh, Auditbeat, CrowdStrike Falcon). This project sits in between — more than a hash differ, less than an enterprise platform.
+
+### Feature matrix
+
+| Capability | **This FIM** | AIDE | Tripwire OSS | OSSEC / Wazuh | Auditbeat | Samhain | Commercial (Tripwire Ent., Qualys FIM, Falcon) |
+|---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+| Native desktop GUI | ✅ dark | ❌ | ❌ | ⚠️ web | ⚠️ Kibana | ❌ | ⚠️ web console |
+| SHA-256 baseline + diff | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Indexed/queryable baseline DB | ✅ SQLite | ⚠️ text/binary file | ⚠️ signed binary | ✅ SQLite | ✅ Elasticsearch | ⚠️ signed flat file | ✅ |
+| Multi-threaded scanning | ✅ | ⚠️ | ⚠️ | ✅ | ✅ | ⚠️ | ✅ |
+| Built-in continuous scheduler | ✅ | ⚠️ external cron | ⚠️ external cron | ✅ | ✅ | ✅ | ✅ |
+| Real-time FS events (inotify / USN) | ❌ | ❌ | ❌ | ✅ | ✅ | ⚠️ | ✅ |
+| Structured JSON logs by default | ✅ | ❌ text | ❌ text | ✅ | ✅ | ⚠️ | ✅ |
+| Hash caching with TTL | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
+| **Shannon entropy analysis** | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ⚠️ some |
+| **YARA rule scanning** | ✅ | ❌ | ❌ | ✅ | ❌ | ❌ | ✅ |
+| **Ransomware heuristic + extension list** | ✅ | ❌ | ❌ | ⚠️ via rules | ❌ | ❌ | ✅ |
+| **Honeypot file tracking** | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ⚠️ separate product |
+| **Authenticode signature verification** | ✅ | ❌ | ❌ | ⚠️ via SCA | ❌ | ❌ | ✅ |
+| **Process attribution** | ⚠️ psutil polling | ❌ | ❌ | ✅ whodata | ✅ auditd | ❌ | ✅ kernel hooks |
+| **Tamper-evident baseline DB** | ❌ | ⚠️ external sig | ✅ signed | ⚠️ via ACLs | ⚠️ | ✅ signed + encrypted | ⚠️ |
+| Multi-host centralized console | ❌ | ❌ | ❌ | ✅ | ✅ Elastic | ⚠️ Beltane | ✅ |
+| SIEM integration | ⚠️ JSON files | ⚠️ report parsing | ⚠️ | ✅ | ✅ native | ⚠️ | ✅ |
+| Agent–server model | ❌ standalone | ❌ standalone | ❌ standalone | ✅ | ✅ | ⚠️ optional | ✅ |
+| Cost | Free / OSS | Free / OSS | Free / OSS | Free / OSS | Free / OSS | Free / OSS | $$ per host |
+| Setup complexity | Low (one command) | Medium | Medium | High | Medium–High | High | Vendor-managed |
+
+> Notes on the table: `✅` = first-class built-in, `⚠️` = available but conditional / partial / requires extra setup, `❌` = not supported. FIM's process attribution is marked `⚠️` because it polls open file handles via `psutil` — short-lived writers are not reliably captured. Wazuh's `whodata` and Auditbeat's `auditd` integration use kernel audit subsystems and capture writers at write time, which is strictly more accurate.
+
+### Where FIM stands out
+
+- **One machine, one process.** No agent, no server, no Elastic cluster, no subscription. `python fim_gui.py` and you're monitoring.
+- **Desktop GUI for FIM.** Most integrity tools are pure CLI — this ships a native dark workspace with a live monitor, log tail, severity charts, and one-click honeypot deployment.
+- **Threat detection bundled with the scanner.** Entropy analysis, ransomware-extension scoring, honeypots, YARA, Authenticode verification, and (best-effort) process attribution all live in the same engine — no plugin ecosystem, no glue scripts.
+- **Honeypots as a first-class primitive.** Drop decoy files in sensitive locations; any change raises a critical alert. Almost no FIM tool treats this as a core feature.
+- **JSON-by-default logging.** Four rotation-managed streams (events / alerts / system / performance), ready for `jq`, Splunk, or any log shipper without translation.
+- **Lightweight footprint.** Two required dependencies (`customtkinter`, `Pillow`). `psutil`, `yara-python`, and `pywin32` are optional and degrade gracefully.
+
+### Scope & tradeoffs
+
+FIM is deliberately scoped as a single-host, GUI-first, locally administered tool. The following are intentional tradeoffs — each comes with practical guidance for users whose needs go further.
+
+- **Polled scanning, not kernel-level real-time.** FIM rescans on a configurable interval (default 60 s) instead of hooking into inotify (Linux) or the USN journal (Windows). This keeps the codebase portable, kernel-module-free, and runnable without elevated privileges. For sub-second detection, layer on **Wazuh** or **Auditbeat**, both of which forward kernel events.
+- **Single-host architecture, not a centralized console.** Each install is independent. This is the right shape for personal workstations, home labs, and small fleets administered by the operator at the keyboard. Teams managing tens to hundreds of hosts should look at **Wazuh** (free) or **Tripwire Enterprise / Qualys FIM** (commercial) for rollups, RBAC, and policy distribution.
+- **Best-effort process attribution.** FIM identifies the process holding an open handle on the changed file via `psutil`. Short-lived writers that have already exited won't be captured. Tools using kernel audit subsystems (`whodata` in Wazuh, `auditd` rules in Auditbeat) catch the actual writer at write time. For mission-critical attribution, run FIM alongside `auditd` and correlate.
+- **Shipper-friendly JSON logs, not a native SIEM connector.** FIM writes rotated JSON-lines files to `logs/`. Any shipper that tails JSON-lines (Filebeat, Promtail, Fluent Bit, Vector, Splunk Universal Forwarder) can ingest them. There is no built-in TCP / syslog / HEC output. If your environment expects an agent that ships natively to Elastic or Splunk, **Auditbeat** or a Splunk-native FIM is a better fit.
+- **Operator-grade UI, not a SOC console.** The GUI is single-user with no roles, no acknowledgement workflow, and no record of operator actions. It's designed for the person sitting at the machine, not a 24/7 monitoring team. Pair with a ticketing system if acknowledgement tracking is required.
+- **Local baseline DB is not tamper-evident.** `fim_database.db` is a plain SQLite file. An attacker who can write to it can rewrite history. Mitigate by storing the DB on read-only media, an SMB share with one-way replication, or running FIM under a service account whose write permissions the attacker doesn't reach. Tools with cryptographically signed databases (**Samhain**, signed Tripwire) raise the bar for FIM-itself tampering; adding signed/encrypted baselines is on the roadmap.
+
+### Project maturity
+
+FIM is a young project. **AIDE**, **Tripwire**, **Samhain**, and **OSSEC** each represent 15–25 years of production deployment, peer review, and adversarial scrutiny. Use FIM today for home labs, personal workstations, small-fleet monitoring, and as a baseline for further development. For regulated workloads (PCI-DSS, HIPAA, government use) where audit defensibility is itself a requirement, lean on the established tools — at least until this project has accrued its own track record.
+
+### Who this is for
+
+- Home labs and personal workstations wanting more than `aide --check` in a cron job
+- Developers, sysadmins, and security students who want a tactile UI to see hashes, entropy, and honeypot trips in real time
+- Small teams running a handful of servers where standing up Wazuh or Elastic is overkill
+- Anyone who wants honeypots, ransomware heuristics, and integrity monitoring in **one process** without buying an enterprise suite
+
 ## 📋 Requirements
 
 ### System Requirements
